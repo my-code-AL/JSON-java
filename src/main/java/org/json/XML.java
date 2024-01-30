@@ -1543,6 +1543,14 @@ public class XML {
     public static JSONObject toJSONObject(String string, XMLParserConfiguration config) throws JSONException {
         return toJSONObject(new StringReader(string), config);
     }
+    
+    /**
+     * 
+     * @param reader - The reader object for the xml string
+     * @param path - The path that is needed to be found
+     * @return - The object under the required path
+     * @throws JSONException
+     */
     public static JSONObject toJSONObject(Reader reader, JSONPointer path) throws JSONException {
         String[] tempPath = path.toString().split("/");
         tempPath = Arrays.copyOfRange(tempPath, 1, tempPath.length);
