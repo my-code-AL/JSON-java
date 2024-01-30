@@ -7,6 +7,7 @@ Public Domain.
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -1321,6 +1322,136 @@ public class XMLTest {
             e.printStackTrace();
             fail("XML document should be parsed as its maximum depth fits the maxNestingDepth " +
                 "parameter of the XMLParserConfiguration used");
+        }
+    }
+    /**
+     * This method tests the efficacy of the milestone 2 method 2
+     * As you can see the initial xml object is taken and a replacement is
+     * named. The method is sucessfully able to replace the subobject (the entire
+     * adress body including nick, name, street, and zipcode) with the new
+     * object (jsonReplacement).
+     * 
+     * The return object from the function call is not null and the resulting
+     * object matches the expected JSON Object output
+     */
+    @Test
+    public void testReplacement() {
+        try {
+            String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                    "<contact>\n" +
+                    "  <address>\n" +
+                    "    <street>\n" +
+                    "  <nick>Crista </nick>\n" +
+                    "  <name>Crista Lopes</name>\n" +
+                    "  </street>\n" +
+                    "    <zipcode>92614</zipcode>\n" +
+                    "  </address>\n" +
+                    "</contact>";
+
+            String jsonReplacement =  
+            "  <place>\n" +
+            "    <street>Muholland Drive</street>\n" +
+            "    <zipcode>92626</zipcode>\n" +
+            "  </place>\n";
+
+            String expected = "{\"contact\":{\"place\":{\"zipcode\":92626,\"street\":\"Muholland Drive\"}}}";
+            
+
+            Reader reader = new StringReader(xmlString);
+            JSONPointer pointer = new JSONPointer("/contact/address");
+            JSONObject replacement = XML.toJSONObject(jsonReplacement);
+            
+
+            JSONObject result = XML.toJSONObject(reader, pointer,replacement);
+            System.out.println(result);
+            assertNotNull("Resulting JSONObject should not be null", result);
+            assertEquals(expected, result.toString());
+        } catch (Error e) {
+            fail("JSONException should definitively not be thrown: " + e.getMessage());
+        }
+    }
+    /**
+     * Further test efficacy of milestone 2 method 2 implementation by checking a different
+     * XMLString for a subObject. The structure of this one is different and therefore allows
+     * for a different means by which to verify the working order of this method.
+     *  it checks to see if the subObject key has been placed within the xmlString and 
+     * then it further checks if these values are able to be accessed.
+     */
+    @Test
+    public void testReplacement2() {
+        try {
+            String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                    "<contact>\n" +
+                    "  <address>\n" +
+                    "    <street>Ave of Nowhere</street>\n" +
+                    "    <zipcode>92614</zipcode>\n" +
+                    "  </address>\n" +
+                    "  <nick>Crista </nick>\n" +
+                    "  <name>Crista Lopes</name>\n" +
+                    "</contact>";
+
+            String jsonReplacement = "  <place>\n" +
+                    "    <street>Muholland Drive</street>\n" +
+                    "    <zipcode>92626</zipcode>\n" +
+                    "  </place>\n";
+
+            
+            // reader for XML String
+            Reader reader = new StringReader(xmlString);
+            // pointer to locate the subObject that needs to be extracted
+            JSONPointer pointer = new JSONPointer("/contact/address");
+            // turning XML String of replacement into a JSON object
+            JSONObject replacement = XML.toJSONObject(jsonReplacement);
+
+            //  getting the answer
+            JSONObject result = XML.toJSONObject(reader, pointer, replacement);
+
+
+            JSONObject address = result.getJSONObject("contact").getJSONObject("place");
+            assert result.getJSONObject("contact").has("place");
+            assert address.getString("street").equals("Muholland Drive");
+            assert address.getInt("zipcode") == (92626);
+        } catch (Error e) {
+            fail("JSONException should definitively not be thrown: " + e.getMessage());
+        }
+    }
+    /**
+     * What happens if we try to use a pointer to a subObject that doesn't exist?
+     * We would expect that nothing happens and the same object is returned
+     */
+    @Test
+    public void testReplacementNull() {
+        try {
+            String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                    "<contact>\n" +
+                    "  <address>\n" +
+                    "    <street>Ave of Nowhere</street>\n" +
+                    "    <zipcode>92614</zipcode>\n" +
+                    "  </address>\n" +
+                    "  <nick>Crista </nick>\n" +
+                    "  <name>Crista Lopes</name>\n" +
+                    "</contact>";
+
+            String jsonReplacement = "  <place>\n" +
+                    "    <street>Muholland Drive</street>\n" +
+                    "    <zipcode>92626</zipcode>\n" +
+                    "  </place>\n";
+
+            // reader for XML String
+            Reader reader = new StringReader(xmlString);
+            // pointer that looks for subObject that doesn't exist
+            JSONPointer pointer = new JSONPointer("/contact/dog");
+            // turning XML String of replacement into a JSON object
+            JSONObject replacement = XML.toJSONObject(jsonReplacement);
+            // expected answer
+            String expected = XML.toJSONObject(xmlString).toString();
+
+            // getting the answer
+            JSONObject actual = XML.toJSONObject(reader, pointer, replacement);
+
+            assertEquals(expected, actual.toString());
+        } catch (Error e) {
+            fail("JSONException should definitively not be thrown: " + e.getMessage());
         }
     }
 }
