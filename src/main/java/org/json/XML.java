@@ -469,6 +469,27 @@ public class XML {
         }
     }
     
+
+    private static Stack<String> stack = new Stack<String>();
+
+    /**
+     * Search if the tag name is present in the path.
+     * 
+     * @param str     - The string array with the paths
+     * @param tagName - The required tag name to find
+     * @return - true if the required tagname is found in the paths
+     */
+    private static boolean isPresent(String[] str, String tagName) {
+        str = Arrays.copyOf(str, str.length - 1);
+
+        for (int i = 0; i < str.length; i += 1) {
+            if (tagName.equals(str[i]))
+                return true;
+        }
+
+        return false;
+    }
+
     /**
      * Scan the content following the named tag, attaching it to the context.
      *
