@@ -1454,6 +1454,48 @@ public class XMLTest {
             fail("JSONException should definitively not be thrown: " + e.getMessage());
         }
     }
+
+    @Test
+    public void customXmlPathExample1() {
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<contact>\n" +
+                " <address>\n" +
+                " <street>Ave of Nowhere</street>\n" +
+                " <zipcode>92614</zipcode>\n" +
+                " </address>\n" +
+                " <nick>Crista </nick>\n" +
+                " <name>Crista Lopes</name>\n" +
+                "</contact>";
+
+        String json = "{\"zipcode\":92614,\"street\":\"Ave of Nowhere\"}\n";
+        JSONObject actual = XML.toJSONObject(new StringReader(xml), new JSONPointer("/contact/address"));
+        JSONObject expected = new JSONObject(json);
+
+        assertTrue(expected.similar(actual));
+    }
+
+    @Test
+    public void customXmlPathExample2() {
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<contact>\n" +
+                "<abc>uhsafouash</abc>\n" +
+                " <address>\n" +
+                " <street>\n" +
+                " <nick>Crista </nick>\n" +
+                " <name>Crista Lopes</name>\n" +
+                "</street>\n" +
+                " <zipcode>92614</zipcode>\n" +
+                " </address>\n" +
+                "<neel>shah</neel>\n" +
+                "</contact>";
+        String json = "{\"nick\":\"Crista\",\"name\":\"Crista Lopes\"}";
+        JSONObject actual = XML.toJSONObject(new StringReader(xml), new JSONPointer("/contact/address/street"));
+        JSONObject expected = new JSONObject(json);
+
+        assertTrue(expected.similar(actual));
+
+    }
+
 }
 
 
