@@ -700,6 +700,9 @@ public class XML {
                                 } else {
                                     jsonObject.accumulate(config.getcDataTagName(),
                                             config.isKeepStrings() ? string : stringToValue(string));
+                                    if (tagName.equals(constPath[constPath.length - 1]))
+                                        requiredObj.accumulate(tagName,
+                                                config.isKeepStrings() ? string : stringToValue(string));
                                 }
                             }
 
@@ -740,7 +743,8 @@ public class XML {
                                             requiredObj.accumulate(tagName, jsonObject.opt(config.getcDataTagName()));
                                         }
                                     } else {
-                                        context.accumulate(tagName, jsonObject);
+                                        if (tagName.equals(constPath[constPath.length - 1]))
+                                            context.accumulate(tagName, jsonObject);
                                     }
                                 }
 

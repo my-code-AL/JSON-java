@@ -1496,6 +1496,25 @@ public class XMLTest {
 
     }
 
+    @Test
+    public void customXmlPathExample3() {
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<contact>\n" +
+                " <address>\n" +
+                " <street>Ave of Nowhere</street>\n" +
+                " <zipcode>92614</zipcode>\n" +
+                " </address>\n" +
+                " <nick>Crista </nick>\n" +
+                " <name>Crista Lopes</name>\n" +
+                "</contact>";
+
+        String json = "{\"street\":\"Ave of Nowhere\"}\n";
+        JSONObject actual = XML.toJSONObject(new StringReader(xml), new JSONPointer("/contact/address/street"));
+        JSONObject expected = new JSONObject(json);
+
+        assertTrue(expected.similar(actual));
+    }
+
 }
 
 
