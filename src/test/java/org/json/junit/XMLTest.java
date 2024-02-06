@@ -1506,7 +1506,14 @@ public class XMLTest {
 
         assertTrue(expected.similar(actual));
     }
-
+    
+    /**
+     * MILESTONE III TEST
+     * 
+     * Determines working order of new toJSONObject method
+     * successfully transforms all keys based upon input function
+     * parameters
+     */
     @Test
     public void updateKeys() {
         Function<String, String> addPrefix = (str) -> "swe262_" + str.toUpperCase();
@@ -1519,10 +1526,114 @@ public class XMLTest {
                 " <nick>Crista </nick>\n" +
                 " <name>Crista Lopes</name>\n" +
                 "</contact>";
+
+        String expected = "{\"swe262_CONTACT\":{\"swe262_NAME\":\"Crista Lopes\",\"swe262_NICK\":\"Crista\",\"swe262_ADDRESS\":{\"swe262_STREET\":\"Ave of Nowhere\",\"swe262_ZIPCODE\":92614}}}";
         JSONObject actual = XML.toJSONObject(new StringReader(xml), addPrefix);
+        assertEquals(expected, actual.toString());
+    }
+    
+    /*
+     * MILESTONE III TEST
+     * 
+     * Deletes part of the key
+     */
+    @Test
+    public void updateKeys2() {
+        Function<String, String> change = (str) -> str.substring(0, str.length() - 2);
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<contact>\n" +
+                " <address>\n" +
+                " <street>Ave of Nowhere</street>\n" +
+                " <zipcode>92614</zipcode>\n" +
+                " </address>\n" +
+                " <nick>Crista </nick>\n" +
+                " <name>Crista Lopes</name>\n" +
+                "</contact>";
+
+        String expected = "{\"conta\":{\"addre\":{\"stre\":\"Ave of Nowhere\",\"zipco\":92614},\"na\":\"Crista Lopes\",\"ni\":\"Crista\"}}";
+
+        JSONObject actual = XML.toJSONObject(new StringReader(xml), change);
+        assertEquals(expected, actual.toString());
+    }
+    
+    /*
+     * MILESTONE III TEST
+     * 
+     * removes key
+     */
+    @Test
+    public void updateKeys3() {
+        Function<String, String> change = (str) -> " ";
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<contact>\n" +
+                " <address>\n" +
+                " <street>Ave of Nowhere</street>\n" +
+                " <zipcode>92614</zipcode>\n" +
+                " </address>\n" +
+                " <nick>Crista </nick>\n" +
+                " <name>Crista Lopes</name>\n" +
+                "</contact>";
+
+        String expected = "{\" \":{\" \":[{\" \":[\"Ave of Nowhere\",92614]},\"Crista\",\"Crista Lopes\"]}}";
+
+
+        JSONObject actual = XML.toJSONObject(new StringReader(xml), change);
 
         System.out.println(actual.toString());
 
+        assertEquals(expected, actual.toString());
+    }
+    
+    /*
+     * MILESTONE III TEST
+     * 
+     * test a more complex structure to verify working order
+     */
+    @Test
+    public void updateKeys4() {
+        Function<String, String> change = (str) -> "good morning";
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<contact>\n" +
+                "    <personalInfo>\n" +
+                "        <name>Crista Lopes</name>\n" +
+                "        <nick>Crista</nick>\n" +
+                "        <email>clopes@example.com</email>\n" +
+                "    </personalInfo>\n" +
+                "    <address>\n" +
+                "        <street>Ave of Nowhere</street>\n" +
+                "        <city>Unknown City</city>\n" +
+                "        <state>CA</state>\n" +
+                "        <zipcode>92614</zipcode>\n" +
+                "        <country>USA</country>\n" +
+                "    </address>\n" +
+                "    <phoneNumbers>\n" +
+                "        <mobile>123-456-7890</mobile>\n" +
+                "        <home>098-765-4321</home>\n" +
+                "    </phoneNumbers>\n" +
+                "    <workInfo>\n" +
+                "        <employer>University of Somewhere</employer>\n" +
+                "        <position>Professor</position>\n" +
+                "        <department>Computer Science</department>\n" +
+                "        <office>\n" +
+                "            <building>Engineering Hall</building>\n" +
+                "            <room>1234</room>\n" +
+                "        </office>\n" +
+                "    </workInfo>\n" +
+                "    <socialMedia>\n" +
+                "        <twitter>@crista</twitter>\n" +
+                "        <linkedin>linkedin.com/in/cristalopes</linkedin>\n" +
+                "    </socialMedia>\n" +
+                "</contact>";
+
+        String expected = "{\"good morning\":{\"good morning\":[{\"good morning\":"
+        + "[\"Crista Lopes\",\"Crista\",\"clopes@example.com\"]},{\"good morning\":"
+        + "[\"Ave of Nowhere\",\"Unknown City\",\"CA\",92614,\"USA\"]},{\"good morning\":"
+        + "[\"123-456-7890\",\"098-765-4321\"]},{\"good morning\":[\"University of Somewhere\","
+        + "\"Professor\",\"Computer Science\",{\"good morning\":[\"Engineering Hall\",1234]}]},"
+        + "{\"good morning\":[\"@crista\",\"linkedin.com/in/cristalopes\"]}]}}";
+
+        JSONObject actual = XML.toJSONObject(new StringReader(xml), change);
+        assertEquals(expected, actual.toString());
     }
 
 }
