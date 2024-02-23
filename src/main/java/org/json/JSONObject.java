@@ -24,9 +24,15 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.Stack;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.json.NumberConversionUtil.potentialNumber;
 import static org.json.NumberConversionUtil.stringToNumber;
@@ -2884,5 +2890,63 @@ public class JSONObject {
         );
     }
 
+    public Stream<JSONObject> toStream() {
+        return StreamSupport
+                .stream(Spliterators.spliteratorUnknownSize(new JSONObjectIterator(this), Spliterator.ORDERED), false);
+    }
+
+    private static class JSONObjectIterator implements Iterator<JSONObject> {
+        private final Stack<Object> stack;
+
+        JSONObjectIterator(JSONObject jsonObject) {
+            this.stack = new Stack<>();
+            stack.push(jsonObject);
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !stack.isEmpty();
+        }
+
+        @Override
+        public JSONObject next() {
+            if (!hasNext())
+                throw new NoSuchElementException();
+
+            Object current = stack.pop();
+
+            if (current instanceof JSONObject) {
+                JSONObject jsonObject = (JSONObject) current;
+
+                for (String key : jsonObject.keySet()) {
+                    Object value = jsonObject.get(key);
+
+                    if (value instanceof JSONObject || value instanceof JSONArray) {
+                        stack.push(value);
+                    }
+                }
+
+                return jsonObject;
+            } else if (current instanceof JSONArray) {
+                JSONArray jsonArray = (JSONArray) current;
+
+                for (int i = jsonArray.length() - 1; i >= 0; i--) {
+                    Object value = jsonArray.get(i);
+
+                    if (value instanceof JSONObject || value instanceof JSONArray) {
+                        stack.push(value);
+                    }
+                }
+
+                return null; // Null indicates that we're iterating over a JSONArray
+            } else {
+                throw new UnsupportedOperationException("JSONObjectStream only supports JSONObject and JSONArray");
+            }
+        }
+    }
+
+    public static Iterable<JSONObject> stream(JSONObject jsonObject) {
+        return () -> new JSONObjectIterator(jsonObject);
+    }
 
 }
