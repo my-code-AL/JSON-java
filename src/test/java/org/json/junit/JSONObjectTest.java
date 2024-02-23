@@ -26,6 +26,7 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.json.CDL;
 import org.json.JSONArray;
@@ -57,6 +58,7 @@ import org.json.junit.data.RecursiveBeanEquals;
 import org.json.junit.data.Singleton;
 import org.json.junit.data.SingletonEnum;
 import org.json.junit.data.WeirdList;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -3817,4 +3819,60 @@ public class JSONObjectTest {
         return nestedMap;
     }
 
+    /**
+     * Test to determine validy of the stream method.
+     */
+    @Test
+    public void streamTest() {
+        JSONObject obj = XML.toJSONObject(
+                "<Books><book><title>AAA</title><author>ASmith</author></book><book><title>BBB</title><author>BSmith</author></book></Books>");
+
+        JSONObject[] allNodesExpected = new JSONObject[] {
+                new JSONObject(
+                        "{\"Books\":{\"book\":[{\"author\":\"ASmith\",\"title\":\"AAA\"},{\"author\":\"BSmith\",\"title\":\"BBB\"}]}}"),
+                new JSONObject(
+                        "{\"book\":[{\"author\":\"ASmith\",\"title\":\"AAA\"},{\"author\":\"BSmith\",\"title\":\"BBB\"}]}"),
+                new JSONObject("{\"author\":\"ASmith\",\"title\":\"AAA\"}"),
+                new JSONObject("{\"author\":\"BSmith\",\"title\":\"BBB\"}") };
+
+        // Get All the nodes
+        JSONObject[] allNodesActual = obj.toStream().filter(node -> node != null).toArray(JSONObject[]::new);
+
+        for (int i = 0; i < allNodesActual.length; i += 1) {
+            assertEquals(allNodesActual[i].toString(), allNodesExpected[i].toString());
+        }
+    }
+    
+    @Test  
+    // TEST TO SEE WE CAN GET TITLES
+    public void streamTest2(){
+            JSONObject obj = XML.toJSONObject(
+                            "<Books><book><title>AAA</title><author>ASmith</author></book><book><title>BBB</title><author>BSmith</author></book></Books>");
+
+        List<String> titles = obj.toStream()
+                        .filter(node -> node != null)
+                        .map(node -> node.optString("title"))
+                        .filter(x -> x.length() > 0)
+                        .collect(Collectors.toList());
+
+        String expectedTitles[] = { "AAA", "BBB" };
+
+        for (int i = 0; i < titles.size(); i += 1) {
+                assertEquals(expectedTitles[i], titles.get(i));
+        }
+    }
+    @Test
+    // TEST TO SEE IF WE CAN GET A PARTICULAR VALUE
+    public void streamTest3() {
+            
+        JSONObject obj = XML.toJSONObject(
+                        "<Books><book><title>AAA</title><author>ASmith</author></book><book><title>BBB</title><author>BSmith</author></book></Books>");
+
+        JSONObject[] expected = obj.toStream().filter(node -> node != null)
+                        .filter(node -> node.has("author") &&
+                                        "ASmith".equals(node.optString("author")))
+                        .toArray(JSONObject[]::new);
+
+        assertEquals(expected[0].toString(), "{\"author\":\"ASmith\",\"title\":\"AAA\"}");
+    }
 }
