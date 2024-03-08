@@ -12,7 +12,11 @@ import java.util.Arrays;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Stack;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.json.NumberConversionUtil.potentialNumber;
@@ -1354,6 +1358,26 @@ public class XML {
     public static JSONObject toJSONObject(String string) throws JSONException {
         return toJSONObject(string, XMLParserConfiguration.ORIGINAL);
     }
+
+    public static void toJsonObject(Reader reader, Consumer<JSONObject> callback,
+            Consumer<Exception> exceptionCallback) {
+        AtomicReference<JSONObject> converted = new AtomicReference<>(new JSONObject());
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        executor.submit(() -> {
+            try {
+                JSONObject jsonObject = toJSONObject(reader);
+                converted.set(jsonObject);
+
+                callback.accept(jsonObject);
+            } catch (Exception e) {
+                exceptionCallback.accept(e);
+            }
+        });
+
+        executor.shutdown();
+    }
+
 
     /**
      * Convert a well-formed (but not necessarily valid) XML into a
