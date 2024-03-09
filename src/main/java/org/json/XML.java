@@ -1358,7 +1358,19 @@ public class XML {
     public static JSONObject toJSONObject(String string) throws JSONException {
         return toJSONObject(string, XMLParserConfiguration.ORIGINAL);
     }
-
+    /**
+     * Milestone V Method 
+     * This method takes in a Reader Object as well as consumer functions that operate on the 
+     * jsonObject after the executor thread has properly parsed the reader xml to JSON. This works
+     * with the use of an atomic reference that is thread safe and after which the callback passed
+     * within the method is utilized on the jsonObject that is parsed. if the jsonObject was unable
+     * to be created, then the exception consumer is passed on the error to be forwaded to the method
+     * user
+     * 
+     * @param reader
+     * @param callback
+     * @param exceptionCallback
+     */
     public static void toJsonObject(Reader reader, Consumer<JSONObject> callback,
             Consumer<Exception> exceptionCallback) {
         AtomicReference<JSONObject> converted = new AtomicReference<>(new JSONObject());

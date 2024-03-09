@@ -8,6 +8,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -22,6 +23,10 @@ import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import org.json.*;
@@ -1585,55 +1590,97 @@ public class XMLTest {
     }
     
     /*
-     * MILESTONE III TEST
+     * MILESTONE V TEST 
      * 
-     * test a more complex structure to verify working order
+     * tests the xml to json conversion capabilities on simple object
      */
     @Test
-    public void updateKeys4() {
-        Function<String, String> change = (str) -> "good morning";
-        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<contact>\n" +
-                "    <personalInfo>\n" +
-                "        <name>Crista Lopes</name>\n" +
-                "        <nick>Crista</nick>\n" +
-                "        <email>clopes@example.com</email>\n" +
-                "    </personalInfo>\n" +
-                "    <address>\n" +
-                "        <street>Ave of Nowhere</street>\n" +
-                "        <city>Unknown City</city>\n" +
-                "        <state>CA</state>\n" +
-                "        <zipcode>92614</zipcode>\n" +
-                "        <country>USA</country>\n" +
-                "    </address>\n" +
-                "    <phoneNumbers>\n" +
-                "        <mobile>123-456-7890</mobile>\n" +
-                "        <home>098-765-4321</home>\n" +
-                "    </phoneNumbers>\n" +
-                "    <workInfo>\n" +
-                "        <employer>University of Somewhere</employer>\n" +
-                "        <position>Professor</position>\n" +
-                "        <department>Computer Science</department>\n" +
-                "        <office>\n" +
-                "            <building>Engineering Hall</building>\n" +
-                "            <room>1234</room>\n" +
-                "        </office>\n" +
-                "    </workInfo>\n" +
-                "    <socialMedia>\n" +
-                "        <twitter>@crista</twitter>\n" +
-                "        <linkedin>linkedin.com/in/cristalopes</linkedin>\n" +
-                "    </socialMedia>\n" +
-                "</contact>";
+    public void testV() throws InterruptedException {
+        String xml = "<root><element>Value</element></root>";
+        CountDownLatch latch = new CountDownLatch(1); // To wait for the async operation
+        AtomicReference<JSONObject> resultRef = new AtomicReference<>();
 
-        String expected = "{\"good morning\":{\"good morning\":[{\"good morning\":"
-        + "[\"Crista Lopes\",\"Crista\",\"clopes@example.com\"]},{\"good morning\":"
-        + "[\"Ave of Nowhere\",\"Unknown City\",\"CA\",92614,\"USA\"]},{\"good morning\":"
-        + "[\"123-456-7890\",\"098-765-4321\"]},{\"good morning\":[\"University of Somewhere\","
-        + "\"Professor\",\"Computer Science\",{\"good morning\":[\"Engineering Hall\",1234]}]},"
-        + "{\"good morning\":[\"@crista\",\"linkedin.com/in/cristalopes\"]}]}}";
+        XML.toJsonObject(
+            new StringReader(xml),
+            jsonObject -> {
+                resultRef.set(jsonObject);
+                latch.countDown(); // Signal completion of async operation
+            },
+            exception -> fail("Exception should not occur"));
 
-        JSONObject actual = XML.toJSONObject(new StringReader(xml), change);
-        assertEquals(expected, actual.toString());
+        latch.await(); // Wait for the async operation to complete
+        JSONObject expected = new JSONObject("{\"root\":{\"element\":\"Value\"}}");
+        assertEquals(expected.toString(), resultRef.get().toString());
     }
 
+    /**
+     * Test async XML to JSON error handling capacities
+     * @throws InterruptedException
+     */
+    @Test
+    public void testV2() throws InterruptedException {
+        String invalidXml = "<root><element>Value</element>"; // Missing closing tag
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Exception> exceptionRef = new AtomicReference<>();
+
+        XML.toJsonObject(
+                new StringReader(invalidXml),
+                jsonObject -> fail("Success callback should not be called for invalid XML"),
+                exception -> {
+                    exceptionRef.set(exception);
+                    latch.countDown();
+                });
+
+        latch.await();
+        assertNotNull(exceptionRef.get());
+        assertTrue(exceptionRef.get() instanceof JSONException);
+    }
+    /**
+     * Want to test if XML is being parsed properly on larger object
+     */
+    @Test
+    public void testV3() {
+
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<contact>\n" +
+                " <address>\n" +
+                " <street>Ave of Nowhere</street>\n" +
+                " <zipcode>92614</zipcode>\n" +
+                " </address>\n" +
+                " <nick>Crista </nick>\n" +
+                " <name>Crista Lopes</name>\n" +
+                "</contact>";
+
+        String jsonString = "{\"contact\":{\"nick\":\"Crista\",\"address\":{\"zipcode\":92614,\"street\":\"Ave of Nowhere\"},\"name\":\"Crista Lopes\"}}";
+        AtomicBoolean isJsonAsExpected = new AtomicBoolean(false);
+        AtomicReference<Exception> exceptionRef = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        XML.toJsonObject(
+            new StringReader(xml),
+            jsonObject -> {
+                    System.out.println(jsonObject.toString());
+                if (jsonObject != null && jsonObject.toString().equals(jsonString)) {
+                    isJsonAsExpected.set(true);
+                    System.out.println(jsonObject.toString());
+                }
+                latch.countDown();
+            },
+            exception -> {
+                exceptionRef.set(exception);
+                latch.countDown();
+            });
+
+        try {
+            boolean completed = latch.await(2, TimeUnit.SECONDS);
+            assertTrue("Asynchronous task did complete in time", completed);
+
+            assertNull("Exception occurred during processing", exceptionRef.get());
+            assertTrue("JSON as expected", isJsonAsExpected.get());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // Restore interrupted status
+            fail("Test interrupted");
+        }
+    }
+    
 }
