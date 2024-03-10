@@ -1322,7 +1322,7 @@ public class XMLTest {
     }
 
     /**
-     * This method tests the efficacy of the milestone 2 method 2
+     * This method tests the efficacy of the MILESTONE 2 METHOD 2
      * As you can see the initial xml object is taken and a replacement is
      * named. The method is sucessfully able to replace the subobject (the entire
      * adress body including nick, name, street, and zipcode) with the new
@@ -1366,7 +1366,7 @@ public class XMLTest {
     }
 
     /**
-     * Further test efficacy of milestone 2 method 2 implementation by checking a
+     * Further test efficacy of MILESTONE 2 METHOD 2 implementation by checking a
      * different
      * XMLString for a subObject. The structure of this one is different and
      * therefore allows
@@ -1413,6 +1413,8 @@ public class XMLTest {
     }
 
     /**
+     * MILESTONE 2 METHOD 2
+     * 
      * What happens if we try to use a pointer to a subObject that doesn't exist?
      * We would expect that nothing happens and the same object is returned
      */
@@ -1452,6 +1454,9 @@ public class XMLTest {
         }
     }
 
+    /**
+     * MILESTONE 2 METHOD 1
+     */
     @Test
     public void customXmlPathExample1() {
         String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
@@ -1470,7 +1475,10 @@ public class XMLTest {
 
         assertTrue(expected.similar(actual));
     }
-
+    
+    /**
+     * MILESTONE 2 METHOD 1
+     */
     @Test
     public void customXmlPathExample2() {
         String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
@@ -1492,7 +1500,10 @@ public class XMLTest {
         assertTrue(expected.similar(actual));
 
     }
-
+    
+    /**
+     * MILESTONE 2 METHOD 1
+     */
     @Test
     public void customXmlPathExample3() {
         String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +

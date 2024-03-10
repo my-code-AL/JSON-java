@@ -496,6 +496,8 @@ public class XML {
     }
 
     /**
+     * parse method for METHOD 1 MILESTONE 2
+     * 
      * Scan the content following the named tag, attaching it to the context.
      *
      * @param x
@@ -540,6 +542,17 @@ public class XML {
         // <=
         // <<
 
+        
+        /**
+         * this lets us jump from the closing tag of the thing we wanted
+         * all the way to the end of the XML document we are parsing. This
+         * is done by checking every closing tag with the target tagName we
+         * wish to replace. We utilize a stack to keep track of all tags as they
+         * come in. If the closing tag is equal to the target, we have found what
+         * we wanted, already extracted the subObject and therefore no longer need
+         * to be in the method. We skip past the remaining tags and get out of the 
+         * method much faster
+         */
         token = x.nextToken();
 
         if (!(token == BANG || token == QUEST)) {
@@ -684,6 +697,7 @@ public class XML {
                             context.accumulate(tagName, "");
                         }
                     }
+                    // exiting the recursive method early in parsing
                     return false;
 
                 } else if (token == GT) {
@@ -718,6 +732,13 @@ public class XML {
                                         "Maximum nesting depth of " + config.getMaxNestingDepth() + " reached");
                             }
 
+                            /**
+                             * this part of the method is where we enter the recursive call.
+                             * before we do that, we want to adjust the path. we saved the 
+                             * name of the tag currently being processed, and check it with
+                             * our array path. if it matches, we decrement our path by the first
+                             * element to keep track of the method's recursive call.
+                             */
                             String[] newP = path;
 
                             if (path.length > 0 && tagName.equals(path[0])) {
@@ -743,7 +764,11 @@ public class XML {
                                     } else if (jsonObject.length() == 1
                                             && jsonObject.opt(config.getcDataTagName()) != null) {
                                         context.accumulate(tagName, jsonObject.opt(config.getcDataTagName()));
-
+                                        /**
+                                         * if the path arr is empty, we know that we 
+                                         * can extract the subObject and save it to a 
+                                         * method variable
+                                         */
                                         if (path.length == 0) {
                                             requiredObj.accumulate(tagName, jsonObject.opt(config.getcDataTagName()));
                                         }
@@ -1066,7 +1091,8 @@ public class XML {
 
             token = x.nextToken();
             
-            
+            // tag is equal to target, we replace its tag
+            // with the subObject we made's top tag
             if (token.equals((Object)LAST_PATH)) {
                 token = NewTagName;
             }
@@ -1093,7 +1119,11 @@ public class XML {
         }
 
         else {
-
+            /**
+             * open tag is found and processed here.
+             * we replace the curr subObjects opening tag
+             * with the opening tag of the subObject
+             */
             tagName = (String) token;
             if(tagName.equals(LAST_PATH)){
                 openTagFound.set(true);
@@ -1203,13 +1233,18 @@ public class XML {
                                 throw x.syntaxError(
                                         "Maximum nesting depth of " + config.getMaxNestingDepth() + " reached");
                             }
-
+                            /**
+                             * adjust path as we go deeper into object
+                             */
                             if (path_tracker.length > 0 && tagName.equals(path_tracker[0])) {
                                 String[] newArray = path_tracker.length > 1
                                         ? Arrays.copyOfRange(path_tracker, 1, path_tracker.length)
                                         : new String[0];
                                 path_tracker = newArray;
                             }
+                            /**
+                             * we have come to the tag of the object we want to replace
+                             */
                             if (path_tracker.length == 1) {
 
                                 LAST_PATH = path_tracker[0].trim();
@@ -1217,22 +1252,15 @@ public class XML {
 
                             if (parsed2(x, jsonObject, tagName, config, currentNestingDepth + 1, path_tracker, replacement,
                                     openTagFound, LAST_PATH, NewTagName)) {
-                                // if (openTagFound.get()) {
-                                   
-                                //     context.put(NewTagName, replacement);
-                                //     return false;
-                                // }
-                                // if(tagName == LAST_PATH){
-                                //     return true;
-                                // }
+                                
+                                /**
+                                 * check to see if we have found the replacement tags
+                                 * we inserted. if so, we replace the object with our
+                                 * own object
+                                 */
                                 if(tagName.equals(NewTagName)){
                                     
-
-                                    
-                                    
                                     for (String key : replacement.keySet()) {
-                                        System.out.println(key);
-                                        System.out.println(replacement.get(key));
                                         jsonObject.put(key, replacement.get(key));
                                     }
                                     
@@ -1359,6 +1387,7 @@ public class XML {
         return toJSONObject(string, XMLParserConfiguration.ORIGINAL);
     }
     /**
+     * MILESTONE 5
      * Milestone V Method 
      * This method takes in a Reader Object as well as consumer functions that operate on the 
      * jsonObject after the executor thread has properly parsed the reader xml to JSON. This works
@@ -1523,6 +1552,15 @@ public class XML {
     }
     
     /**
+     * METHOD 1 MILESTONE 2 
+     * 
+     * essentially use an array to parse through the different levels of the JSON structure
+     * as we get deeper. once we find the deepest level associated with the pointer, we can
+     * extract that subobject that is passed through an overloaded parse method along with 
+     * every method call. We essentialluy add an empty json Object and once we find the subObject
+     * we are looking for, we save it to an empty JSONObject and return that value the second we find
+     * it thereby speeding up the process of finding a subObject without parsing the whole XML File
+     * 
      * 
      * @param reader - The reader object for the xml string
      * @param path - The path that is needed to be found
@@ -1562,7 +1600,7 @@ public class XML {
     }
 
     /**
-     * SECOND METHOD INPLEMENTATION FOR MILESTONE 2
+     * METHOD 2 MILESTONE 2
      * @param reader - reads the XML String
      * @param path - path to SubObject that we wish to replace
      * @param replacement - the actual JSON Object that we want to use to replace the object at end of path
